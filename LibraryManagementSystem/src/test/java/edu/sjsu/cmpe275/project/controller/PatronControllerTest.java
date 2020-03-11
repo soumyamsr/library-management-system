@@ -21,6 +21,7 @@ import org.springframework.ui.ModelMap;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -70,7 +71,7 @@ public class PatronControllerTest {
     PatronControllerDummy patronController;
 
 
-
+    BooksHoldList booksHoldList;
     private MockMvc mockMvc;
 
     @Before
@@ -95,8 +96,10 @@ public class PatronControllerTest {
 
         Checkout ch1 = new Checkout();
         Checkout ch2 = new Checkout();
+        ch1.setBookId(11);
+        ch2.setBookId(12);
 
-        BooksHoldList booksHoldList = new BooksHoldList();
+        booksHoldList = new BooksHoldList();
 
         when(checkoutService.findByBookId(anyInt())).thenReturn(Arrays.asList(ch1,ch2));
         when(bookService.findById((String)any())).thenReturn(book);
@@ -135,9 +138,8 @@ public class PatronControllerTest {
 
     @Test
     public  void testAddToCartById(){
-        patronController.addToCart("12" ,"11",(ModelMap) any());
-
-
+        booksHoldList.setUserId(12);
+        assertEquals("AlreadyCheckedOut",patronController.addToCart("12" ,"11",(ModelMap) any()));
 
     }
 
