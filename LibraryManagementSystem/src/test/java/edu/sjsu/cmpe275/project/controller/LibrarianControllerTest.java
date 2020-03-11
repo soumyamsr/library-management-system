@@ -1,126 +1,155 @@
 package edu.sjsu.cmpe275.project.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import edu.sjsu.cmpe275.project.dao.MyCalendarDao;
+import edu.sjsu.cmpe275.project.model.Book;
+import edu.sjsu.cmpe275.project.model.BookCopy;
+import edu.sjsu.cmpe275.project.model.User;
+import edu.sjsu.cmpe275.project.service.*;
+import edu.sjsu.cmpe275.project.util.CustomTimeService;
+import org.hibernate.SessionFactory;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
-import org.springframework.security.web.FilterChainProxy;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.ui.ModelMap;
 
-import edu.sjsu.cmpe275.project.configuration.HibernateConfigTest;
-import edu.sjsu.cmpe275.project.security.CustomUserDetailsService;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.List;
 
-/**
- * @author Onkar Ganjewar
- */
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = HibernateConfigTest.class)
-@WebAppConfiguration
 public class LibrarianControllerTest {
+    @Mock
+    SessionFactory sessionFactory;
 
-	static final Logger logger = LoggerFactory.getLogger(CustomUserDetailsService.class);
+    @Mock
+    BookService bookService;
+    @Mock
+    UserService userService;
 
-	@Autowired
-	private WebApplicationContext wac;
+    @Mock
+    private NotificationService notificationService;
 
-	private MockMvc springMvc;
+    @Mock
+    private MyCalendarDao myCalendarDao;
 
-	@Autowired
-	private FilterChainProxy springSecurityFilterChain;
+    @Mock
+    private CheckoutService checkoutService;
 
-	@Before
-	public void setup() {
-		this.springMvc = MockMvcBuilders.webAppContextSetup(wac).addFilters(springSecurityFilterChain)
-				.apply(SecurityMockMvcConfigurers.springSecurity()).build();
-	}
+    @Mock
+    private BookCartService cartService;
 
-	/**
-	 * Test for librarian home page
-	 * @throws Exception
-	 */
-	@Test
-	@WithUserDetails(value="onkar.ganjewar@sjsu.edu", userDetailsServiceBeanName="customUserDetailsService")
-    public void renderIndexTest() throws Exception {
-        this.springMvc.perform(get("/librarian/home")
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(MockMvcResultMatchers.status().isOk())
-        		.andExpect(MockMvcResultMatchers.view().name("admin"))
-        		.andDo(print());
-	}
+    @Mock
+    private WaitListService waitListService;
 
-	/**
-	 * Test to check if the new book registration page is returned or not.
-	 * @throws Exception
-	 */
-	@Test
-	@WithUserDetails(value="onkar.ganjewar@sjsu.edu", userDetailsServiceBeanName="customUserDetailsService")
-    public void renderBookRegistrationTest() throws Exception {
-		this.springMvc.perform(get("/librarian/new-book")
-				.accept(MediaType.ALL))
-				.andDo(print()).andExpect(status().isOk())
-				.andDo(print());
+    @Mock
+    private BookCopyService bookCopyService;
+
+    @Mock
+    private HoldListService holdListService;
+
+    @Mock
+    private CustomTimeService myTimeService;
+
+
+    @InjectMocks
+    LibrarianControllerDummy librarianController;
+
+    ModelMap modelMap;
+
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+        User user = new User();
+        user.setFirstName("A1");
+        user.setEmail("A1@a1.com");
+        user.setId(123);
+
+        Book book = new Book();
+        book.setTitle("Title1");
+        book.setId(122);
+
+        Book book2 = new Book();
+        book.setTitle("Title2");
+        book.setId(123);
+
+        BookCopy bookCopy = new BookCopy();
+        bookCopy.setId(122);
+
+        BookCopy bookCopy2 = new BookCopy();
+        bookCopy2.setId(123);
+
+        List<Book> books = Arrays.asList(book, book2);
+        List<BookCopy> bookscopy = Arrays.asList(bookCopy, bookCopy2);
+        when(bookService.findAllBooks()).thenReturn(books);
+        when(bookService.findById((String)any())).thenReturn(book);
+        when(bookCopyService.findAllByBook((Book)any())).thenReturn(bookscopy);
+
+        when(userService.findByEmail("A1@a1.com")).thenReturn(user);
+        modelMap = new ModelMap();
     }
-	
-	/**
-	 * Test to fetch the search results for a book based on the title
-	 * @throws Exception
-	 */
-	@Test
-	@WithUserDetails(value="onkar.ganjewar@sjsu.edu", userDetailsServiceBeanName="customUserDetailsService")
-    public void renderSearchResultsTest() throws Exception {
-        this.springMvc.perform(get("/librarian/search-book-testBook")
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(MockMvcResultMatchers.status().isOk())
-        		.andExpect(MockMvcResultMatchers.view().name("searchResults"))
-        		.andDo(print());
-	}
 
-	/**
-	 * Test to delete the book by id 
-	 * @throws Exception
-	 */
-	@Test
-	@WithUserDetails(value="onkar.ganjewar@sjsu.edu", userDetailsServiceBeanName="customUserDetailsService")
-    public void deleteBookTest() throws Exception {
-        this.springMvc.perform(get("/librarian/delete-book-10")
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(MockMvcResultMatchers.status().isOk())
-        		.andExpect(MockMvcResultMatchers.view().name("admin"))
-        		.andDo(print());
-	}
-	
-	/**
-	 * Test to GET the book details by ISBN
-	 * @throws Exception
-	 */
-	@Test
-	@WithUserDetails(value="onkar.ganjewar@sjsu.edu", userDetailsServiceBeanName="customUserDetailsService")
-    public void renderBookByISBNTest() throws Exception {
-        this.springMvc.perform(get("/librarian/bookInfo-0735619670")
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(MockMvcResultMatchers.status().isOk())
-        		.andExpect(MockMvcResultMatchers.view().name("newBook"))
-        		.andDo(print());
-	}
-	
+    @Test
+    public void testDeleteBookBySearch(){
+        Book book = new Book();
+        book.setTitle("Title1");
+        book.setId(122);
+        List<Book> books = Arrays.asList(book);
+
+        when(bookService.findById("122")).thenReturn(book);
+        when(bookService.findByTitle("Title1")).thenReturn(books);
+
+        librarianController.deleteBookFromSearch("122",modelMap);
+
+        verify(bookService ,times(1)).deleteBook(122);
+
+
+    }
+
+    @Test
+    public void testHomeAction(){
+
+        librarianController.renderIndex(modelMap);
+        verify(bookService, times(1)).findAllBooks();
+        verify(userService, times(1)).findByEmail("A1@a1.com");
+    }
+
+    @Test
+    public void testCreatingNewBook(){
+        ModelMap modelMap2 = new ModelMap();
+        assertEquals("newBook",librarianController.renderBookRegistration(modelMap2));
+        assertTrue( modelMap2.get("book") instanceof Book );
+    }
+
+    @Test
+    public void testEditBookById(){
+        ModelMap modelMap2 = new ModelMap();
+        librarianController.renderBookEdit((String) any(), modelMap2);
+        assertEquals(2,modelMap2.get("copies"));
+        assertEquals(true,modelMap2.get("edit"));
+
+    }
+    @Test
+    public void testUpdateBookNoCopies(){
+        Book book = new Book();
+        String id = "123";
+        librarianController.updateBook(book,id,"cn");
+        verify(bookCopyService,times(0)).deleteCopy((BookCopy)any());
+        verify(bookCopyService,times(1)).saveCopy((BookCopy)any());
+    }
+
+    @Test
+    public void testUpdateBookWithCopies(){
+        Book book = new Book();
+        String id = "123";
+        librarianController.updateBook(book,id,"3");
+        verify(bookCopyService,times(2)).deleteCopy((BookCopy)any());
+        verify(bookCopyService,times(3)).saveCopy((BookCopy)any());
+    }
 }

@@ -389,7 +389,7 @@ public class LibrarianController {
 	 * Get the UserName of the logged-in user.
 	 * @return the UserName of the logged-in user
 	 */
-	private String getPrincipal() {
+	protected String getPrincipal() {
 		String userName = null;
 		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -431,6 +431,7 @@ public class LibrarianController {
 			logger.error("Something went wrong");
 		}
 
+
 		try {
 			alertService.generateFines(customDate, true);
 		} catch (ServiceException e) {
@@ -441,4 +442,9 @@ public class LibrarianController {
 	}
 
 
+}class LibrarianControllerDummy extends LibrarianController{
+	@Override
+	protected String getPrincipal() {
+		return "A1@a1.com";
+	}
 }
