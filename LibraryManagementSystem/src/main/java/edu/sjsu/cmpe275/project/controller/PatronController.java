@@ -155,6 +155,7 @@ public class PatronController {
 	 */
 	@RequestMapping(value = "/search-book-{txtSearch}", method = RequestMethod.GET)
 	public String renderSearchedBooks(@PathVariable String txtSearch, ModelMap model) {
+
 		List<Book> books = (List<Book>) bookService.findByTitle(txtSearch);
 		String email_user = getPrincipal();
 		User currentuser = userService.findByEmail(email_user);
@@ -349,7 +350,7 @@ public class PatronController {
 	 * 
 	 * @return the UserName of the logged-in user
 	 */
-	private String getPrincipal() {
+	protected String getPrincipal() {
 		String userName = null;
 		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
@@ -888,3 +889,11 @@ public class PatronController {
 	}
 
 }
+
+class PatronControllerDummy extends PatronController{
+	@Override
+	protected String getPrincipal() {
+		return "A1@a1.com";
+	}
+}
+

@@ -1,228 +1,144 @@
 package edu.sjsu.cmpe275.project.controller;
 
+import edu.sjsu.cmpe275.project.dao.MyCalendarDao;
+import edu.sjsu.cmpe275.project.model.*;
+import edu.sjsu.cmpe275.project.service.*;
+import edu.sjsu.cmpe275.project.util.CustomTimeService;
+import org.hibernate.SessionFactory;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.ui.ModelMap;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
-import org.springframework.security.web.FilterChainProxy;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
-
-import edu.sjsu.cmpe275.project.configuration.HibernateConfigTest;
-import edu.sjsu.cmpe275.project.security.CustomUserDetailsService;
-
-/**
- * @author Onkar Ganjewar
- */
-
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = HibernateConfigTest.class)
-@WebAppConfiguration
+@RunWith(MockitoJUnitRunner.class)
 public class PatronControllerTest {
 
-	static final Logger logger = LoggerFactory.getLogger(CustomUserDetailsService.class);
 
-	@Autowired
-	private WebApplicationContext wac;
+    @Mock
+    SessionFactory sessionFactory;
 
-	private MockMvc springMvc;
+    @Mock
+    BookService bookService;
+    @Mock
+    UserService userService;
 
-	@Autowired
-	private FilterChainProxy springSecurityFilterChain;
+    @Mock
+    private NotificationService notificationService;
 
-	@Before
-	public void setup() {
-		this.springMvc = MockMvcBuilders.webAppContextSetup(wac).addFilters(springSecurityFilterChain)
-				.apply(SecurityMockMvcConfigurers.springSecurity()).build();
-	}
+    @Mock
+    private MyCalendarDao myCalendarDao;
 
-	/**
-	 * Test to get the index page for the patron
-	 * @throws Exception
-	 */
-	@Test
-	public void renderIndexTest() throws Exception {
-        this.springMvc.perform(get("/patron/home")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(status().isOk()).andDo(print());
-	}
+    @Mock
+    private CheckoutService checkoutService;
+
+    @Mock
+    private BookCartService cartService;
+
+    @Mock
+    private WaitListService waitListService;
+
+    @Mock
+    private BookCopyService bookCopyService;
+
+    @Mock
+    private HoldListService holdListService;
+
+    @Mock
+    private CustomTimeService myTimeService;
 
 
-	/**
-	 * Test to get the checkout confirmation page
-	 * @throws Exception
-	 */
-	@Test
-	public void renderCheckoutCompleteTest() throws Exception {
-        this.springMvc.perform(get("/patron/confirmedCheckout")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("bookId", "6")
-				.param("userId", "1")
-        		.accept(MediaType.ALL)).andDo(print())
-		        .andExpect(MockMvcResultMatchers.status().isOk())
-				.andExpect(MockMvcResultMatchers.view().name("confirmedCheckoutScreen"))
-				.andDo(print());
-	}
-	
 
-	/**
-	 * Test to get the search results page
-	 * @throws Exception
-	 */
-	@Test
-	public void renderSearchedBooksTest() throws Exception {
-        this.springMvc.perform(get("/patron/search-book-9")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(status().isOk()).andDo(print());
-	}
+    @InjectMocks
+    PatronControllerDummy patronController;
 
-	/**
-	 * Test to get the checkout verification page
-	 * @throws Exception
-	 */
-	@Test
-	public void renderCheckoutConfirmationTest() throws Exception {
-        this.springMvc.perform(get("/patron/checkout-book-8")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("name", "ganjewaronkar@gmail.com")
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(MockMvcResultMatchers.status().isOk())
-				.andExpect(MockMvcResultMatchers.view().name("bookCheckoutWindow"))
-				.andDo(print());
-	}	
 
-	/**
-	 * Test to checkout the book with given id
-	 * @throws Exception
-	 */
-	@Test
-	public void checkoutBookTest() throws Exception {
-        this.springMvc.perform(get("/patron/confirm-checkout-book-8")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("name", "3")
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(status().isOk()).andDo(print());
-	}
-	
-	/**
-	 * Test to get the list of checked out books for the user
-	 * @throws Exception
-	 */
-	@Test
-	public void renderCheckedOutBooksTest() throws Exception {
-        this.springMvc.perform(get("/patron/viewCheckedOutBooks")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("name", "3")
-        		.accept(MediaType.ALL)).andDo(print())
-		        .andExpect(MockMvcResultMatchers.status().isOk())
-				.andExpect(MockMvcResultMatchers.view().name("checkedOutBooks"))
-				.andDo(print());
-	}
 
-	/**
-	 * Test to return the book with given id
-	 * @throws Exception
-	 */
-	@Test
-	public void returnBookTest() throws Exception {
-        this.springMvc.perform(get("/patron/return-book-6")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("name", "ganjewaronkar@gmail.com")
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(status().isOk()).andDo(print());
-	}
-	
-	/**
-	 * Test to add the book with given id to the cart
-	 * @throws Exception
-	 */
-	@Test
-	public void addToCartTest() throws Exception {
-        this.springMvc.perform(get("/patron/addToCart-10")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("name", "7")
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(status().isOk()).andDo(print());
-	}
-	
-	/**
-	 * Test to get the cart items for given user
-	 * @throws Exception
-	 */
-	@Test
-	public void viewCartTest() throws Exception {
-        this.springMvc.perform(get("/patron/viewCart")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("name", "7")
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(status().isOk()).andDo(print());
-	}
-	
-	/**
-	 * Test to renew the book with given id
-	 * @throws Exception
-	 */
-	@Test
-	public void renewBookTest() throws Exception {
-        this.springMvc.perform(get("/patron/renew-book-6")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("name", "3")
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(status().isOk()).andDo(print());
-	}
-	
-	/**
-	 * Test to add the user to the waiting list
-	 * @throws Exception
-	 */
-	@Test
-	public void addToWaitingListTest() throws Exception {
-        this.springMvc.perform(get("/patron/add-to-waiting-list-6")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("name", "3")
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(status().isOk()).andDo(print());
-	}
-	
-	/**
-	 * Test to remove the book with given id from the cart
-	 * @throws Exception
-	 */
-	@Test
-	public void removeBookFromCartTest() throws Exception {
-        this.springMvc.perform(get("/patron/remove-from-cart-8")
-        		.with(user("ganjewaronkar@gmail.com").roles("USER"))
-        		.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("name", "3")
-        		.accept(MediaType.ALL)).andDo(print())
-        		.andExpect(status().isOk()).andDo(print());
-	}
-	
+    private MockMvc mockMvc;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+        Book book = new Book();
+        book.setTitle("Title1");
+        book.setId(122);
+
+        Book book2 = new Book();
+        book.setTitle("Title2");
+        book.setId(123);
+
+        BookCopy bookCopy = new BookCopy();
+        bookCopy.setId(122);
+
+        BookCopy bookCopy2 = new BookCopy();
+        bookCopy2.setId(123);
+
+        List<Book> books = Arrays.asList(book, book2);
+        List<BookCopy> bookscopy = Arrays.asList(bookCopy, bookCopy2);
+
+        Checkout ch1 = new Checkout();
+        Checkout ch2 = new Checkout();
+
+        BooksHoldList booksHoldList = new BooksHoldList();
+
+        when(checkoutService.findByBookId(anyInt())).thenReturn(Arrays.asList(ch1,ch2));
+        when(bookService.findById((String)any())).thenReturn(book);
+        when(bookCopyService.findAllByBook((Book)any())).thenReturn(bookscopy);
+        when(holdListService.findAllBookCopies( anyInt())).thenReturn(bookscopy);
+        when(holdListService.getFirstInLineForBook( anyInt())).thenReturn(booksHoldList);
+        when(checkoutService.findByUserId(anyInt())).thenReturn(Arrays.asList(ch1,ch2));
+
+
+
+        mockMvc = MockMvcBuilders.standaloneSetup(patronController).build();
+    }
+
+    @Test
+    public void testSearchBookByText() throws Exception {
+        User u1 = new User();
+        u1.setFirstName("A1");
+        u1.setEmail("A1@a1.com");
+        u1.setId(123);
+
+        Book b1 = new Book();
+        b1.setTitle("Title1");
+        b1.setId(122);
+
+        List<Book> books = Arrays.asList(b1);
+
+        when(bookService.findByTitle("Title1")).thenReturn(books);
+        when(userService.findByEmail("A1@a1.com")).thenReturn(u1);
+
+        mockMvc.perform(get("/patron/search-book-Title1")
+                .with(user("A1@a1.com").roles("USER"))
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .accept(MediaType.ALL)).andDo(print())
+                .andExpect(status().isOk()).andDo(print());
+    }
+
+    @Test
+    public  void testAddToCartById(){
+        patronController.addToCart("12" ,"11",(ModelMap) any());
+
+
+
+    }
+
 }
