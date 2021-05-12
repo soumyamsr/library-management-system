@@ -13,7 +13,7 @@
 
 		<!-- Spring -->
 		<springframework.version>4.2.5.RELEASE</springframework.version>
-		<springsecurity.version>4.2.0.RELEASE</springsecurity.version>
+		<springsecurity.version>5.2.10.RELEASE</springsecurity.version>
 		<spring-data-jpa.version>1.8.2.RELEASE</spring-data-jpa.version>
 
 		<!-- AspectJ -->
