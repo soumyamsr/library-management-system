@@ -20,7 +20,7 @@
 		<aspectj.version>1.7.4</aspectj.version>
 		
 		<!-- persistence -->
-		<hibernate.version>4.3.11.Final</hibernate.version>
+		<hibernate.version>5.4.24.Final</hibernate.version>
 		<mysql-connector-java.version>5.1.31</mysql-connector-java.version>
 		<h2.version>1.4.192</h2.version>
 
